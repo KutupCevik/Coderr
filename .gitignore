@@ -1,0 +1,133 @@
+# ==========================
+# PYTHON / DJANGO
+# ==========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+*.log
+*.pot
+*.py,cover
+*.mo
+.coverage
+.coverage.*
+.pytest_cache/
+htmlcov/
+.cache/
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+test_db.sqlite3
+
+# ==========================
+# VIRTUAL ENVIRONMENTS
+# ==========================
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+env.bkp/
+
+# ==========================
+# DJANGO SPECIFIC
+# ==========================
+*/migrations/__pycache__/
+*/migrations/*.pyc
+*/migrations/*.pyo
+db.sqlite3
+db.sqlite3-journal
+*.db
+*.sqlite3
+
+# ==========================
+# ENV / SECRETS
+# ==========================
+.env
+*.env
+.env.local
+.env.development
+.env.production
+/secrets.json
+
+# ==========================
+# STATIC / MEDIA
+# ==========================
+staticfiles/
+static/
+media/
+mediafiles/
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.svg
+
+# ==========================
+# IDE / EDITOR
+# ==========================
+.idea/
+*.sublime-*
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ==========================
+# BUILD / DISTRIBUTION
+# ==========================
+.Python
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+.installed.cfg
+MANIFEST
+
+# ==========================
+# FRONTEND (OPTIONAL ANGULAR)
+# ==========================
+dist/
+tmp/
+app/**/*.js
+app/**/*.js.map
+node_modules/
+bower_components/
+
+# ==========================
+# OS FILES
+# ==========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================
+# BACKUPS / TEMP
+# ==========================
+*.bak
+*.old
+*.tmp
+*.swp
+*~
+
+# ==========================
+# GIT / DOCKER
+# ==========================
+.gitconfig
+docker-compose.override.yml
+*.pid
