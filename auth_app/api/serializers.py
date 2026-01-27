@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth.models import User
 
 
 class RegistrationSerializer(serializers.Serializer):
@@ -13,6 +14,20 @@ class RegistrationSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {"repeated_password": "Passwords do not match."}
             )
+
+        username = attrs["username"]
+        email = attrs["email"]
+
+        if User.objects.filter(username=username).exists():
+            raise serializers.ValidationError(
+                {"username": "This username is already taken."}
+            )
+
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError(
+                {"email": "This email is already in use."}
+            )
+
         return attrs
 
 
