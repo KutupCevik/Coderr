@@ -49,3 +49,24 @@ class OfferListSerializer(serializers.ModelSerializer):
             "last_name": obj.user.last_name or "",
             "username": obj.user.username,
         }
+
+
+class OfferRetrieveSerializer(serializers.ModelSerializer):
+    min_price = serializers.FloatField(read_only=True)
+    min_delivery_time = serializers.IntegerField(read_only=True)
+    details = OfferDetailLinkSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Offer
+        fields = [
+            "id",
+            "user",
+            "title",
+            "image",
+            "description",
+            "created_at",
+            "updated_at",
+            "details",
+            "min_price",
+            "min_delivery_time",
+        ]
