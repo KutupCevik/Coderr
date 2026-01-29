@@ -26,3 +26,10 @@ class OrderSerializer(serializers.ModelSerializer):
 class OrderCreateSerializer(serializers.Serializer):
     """Creates an order based on an OfferDetail id."""
     offer_detail_id = serializers.IntegerField()
+
+
+class OrderStatusSerializer(serializers.ModelSerializer):
+    """Allows business users to update only the order status."""
+    class Meta:
+        model = Order
+        fields = ["status"]
