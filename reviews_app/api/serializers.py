@@ -49,3 +49,15 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context["request"]
         return Review.objects.create(reviewer=request.user, **validated_data)
+
+
+class ReviewUpdateSerializer(serializers.ModelSerializer):
+    """Allows updating only rating and description."""
+    class Meta:
+        model = Review
+        fields = ["rating", "description"]
+
+    def validate_rating(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("Rating must be between 1 and 5.")
+        return value
