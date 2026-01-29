@@ -3,11 +3,12 @@ from rest_framework import viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 
-from offers_app.models import Offer
+from offers_app.models import Offer, OfferDetail
 from .serializers import (
     OfferListSerializer,
     OfferRetrieveSerializer,
-    OfferWriteSerializer
+    OfferWriteSerializer,
+    OfferDetailWriteSerializer,
 )
 from .permissions import IsBusinessUser, IsOfferOwner
 
@@ -68,3 +69,9 @@ class OfferViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return OfferRetrieveSerializer
         return OfferWriteSerializer
+
+
+class OfferDetailViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = OfferDetail.objects.all()
+    serializer_class = OfferDetailWriteSerializer
+    permission_classes = [IsAuthenticated]
