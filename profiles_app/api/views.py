@@ -17,3 +17,11 @@ class BusinessProfileListView(generics.ListAPIView):
 
     def get_queryset(self):
         return UserProfile.objects.select_related("user").filter(type="business")
+
+
+class CustomerProfileListView(generics.ListAPIView):
+    serializer_class = ProfileListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return UserProfile.objects.select_related("user").filter(type="customer")
