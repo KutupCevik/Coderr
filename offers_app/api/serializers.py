@@ -9,3 +9,14 @@ class OfferDetailWriteSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "revisions", "delivery_time_in_days", "price", "features", "offer_type"]
         read_only_fields = ["id"]
 
+
+class OfferDetailLinkSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OfferDetail
+        fields = ["id", "url"]
+
+    def get_url(self, obj):
+        return reverse("offerdetail-detail", kwargs={"pk": obj.id})
+
