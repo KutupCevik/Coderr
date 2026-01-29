@@ -7,12 +7,20 @@ class OfferDetailWriteSerializer(serializers.ModelSerializer):
     """Serializer for creating/updating OfferDetail objects."""
     class Meta:
         model = OfferDetail
-        fields = ["id", "title", "revisions", "delivery_time_in_days", "price", "features", "offer_type"]
+        fields = [
+            "id",
+            "title",
+            "revisions",
+            "delivery_time_in_days",
+            "price",
+            "features",
+            "offer_type",
+        ]
         read_only_fields = ["id"]
 
 
 class OfferDetailLinkSerializer(serializers.ModelSerializer):
-    """Serializer returning id and detail URL for OfferDetail."""
+    """Serializer returning id and URL for OfferDetail."""
     url = serializers.SerializerMethodField()
 
     class Meta:
@@ -21,6 +29,59 @@ class OfferDetailLinkSerializer(serializers.ModelSerializer):
 
     def get_url(self, obj):
         return reverse("offerdetail-detail", kwargs={"pk": obj.id})
+
+
+class OfferListSerializer(serializers.ModelSerializer):
+    """Serializer for offer list endpoint including user_details and min values."""
+    min_price = serializers.FloatField(read_only=True)
+    min_delivery_time = serializers.IntegerField(read_only=True)
+    details = OfferDetailLinkSerializer(many=True, read_only=True)
+    user_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Offer
+        fields = [
+            "id",
+            "user",
+            "title",
+            "image",
+            "description",
+            "created_at",
+            "updated_at",
+            "details",
+            "min_price",
+            "min_delivery_time",
+            "user_details",
+        ]
+
+    def get_user_details(self, obj):
+        return {
+            "first_name": obj.user.first_name or "",
+            "last_name": obj.user.last_name or "",
+            "username": obj.user.username,
+        }
+
+
+class OfferRetrieveSerializer(serializers.ModelSerializer):
+    """Serializer for offer detail endpoint with links to offer details."""
+    min_price = serializers.FloatField(read_only=True)
+    min_delivery_time = serializers.IntegerField(read_only=True)
+    details = OfferDetailLinkSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Offer
+        fields = [
+            "id",
+            "user",
+            "title",
+            "image",
+            "description",
+            "created_at",
+            "updated_at",
+            "details",
+            "min_price",
+            "min_delivery_time",
+        ]
 
 
 class OfferWriteSerializer(serializers.ModelSerializer):
@@ -80,7 +141,9 @@ class OfferWriteSerializer(serializers.ModelSerializer):
         try:
             return OfferDetail.objects.get(offer=offer, offer_type=offer_type)
         except OfferDetail.DoesNotExist:
-            raise serializers.ValidationError({"details": f"Detail with offer_type '{offer_type}' not found."})
+            raise serializers.ValidationError(
+                {"details": f"Detail with offer_type '{offer_type}' not found."}
+            )
 
     def _apply_detail_fields(self, offer_detail, detail):
         for field in ["title", "revisions", "delivery_time_in_days", "price", "features"]:
