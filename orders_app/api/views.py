@@ -1,7 +1,9 @@
+from django.contrib.auth.models import User
 from django.db.models import Q
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from offers_app.models import OfferDetail
 from orders_app.models import Order
@@ -75,3 +77,25 @@ class OrderViewSet(viewsets.ModelViewSet):
         if isinstance(exc, ValueError):
             return Response({"detail": "Offer detail not found."}, status=status.HTTP_404_NOT_FOUND)
         return super().handle_exception(exc)
+
+
+class OrderCountView(APIView):
+    """Returns count of in-progress orders for a business user."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, business_user_id):
+        business_user = self._get_business_user(business_user_id)
+        if business_user is None:
+            return Response({"detail": "Business user not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        count = Order.objects.filter(business_user=business_user, status="in_progress").count()
+        return Response({"order_count": count}, status=status.HTTP_200_OK)
+
+    def _get_business_user(self, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return None
+        if not hasattr(user, "profile") or user.profile.type != "business":
+            return None
+        return user
