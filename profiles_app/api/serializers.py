@@ -57,3 +57,40 @@ class ProfileSerializer(serializers.ModelSerializer):
             if data.get(field) is None:
                 data[field] = ""
         return data
+
+
+class ProfileListSerializer(serializers.ModelSerializer):
+    user = serializers.IntegerField(source="user.id", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
+
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name = serializers.CharField(source="user.last_name", read_only=True)
+
+    file = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            "user",
+            "username",
+            "first_name",
+            "last_name",
+            "file",
+            "location",
+            "tel",
+            "description",
+            "working_hours",
+            "type",
+        ]
+
+    def get_file(self, obj):
+        if not obj.file:
+            return None
+        return Path(obj.file.name).name
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        for field in ["first_name", "last_name", "location", "tel", "description", "working_hours"]:
+            if data.get(field) is None:
+                data[field] = ""
+        return data
