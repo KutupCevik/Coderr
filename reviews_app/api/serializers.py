@@ -19,10 +19,21 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class ReviewCreateSerializer(serializers.ModelSerializer):
-    """Creates a review for a business user by the authenticated customer."""
+    """Creates a review and returns the created review including its id."""
+    reviewer = serializers.IntegerField(source="reviewer.id", read_only=True)
+
     class Meta:
         model = Review
-        fields = ["business_user", "rating", "description"]
+        fields = [
+            "id",
+            "business_user",
+            "reviewer",
+            "rating",
+            "description",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "reviewer", "created_at", "updated_at"]
 
     def validate_rating(self, value):
         if value < 1 or value > 5:
@@ -37,12 +48,11 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"business_user": "User is not a business profile."})
 
         exists = Review.objects.filter(
-            business_user=business_user, reviewer=request.user
+            business_user=business_user,
+            reviewer=request.user,
         ).exists()
         if exists:
-            raise serializers.ValidationError(
-                {"detail": "You have already reviewed this business user."}
-            )
+            raise serializers.ValidationError({"detail": "You have already reviewed this business user."})
 
         return attrs
 
