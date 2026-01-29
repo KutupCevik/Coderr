@@ -3,7 +3,19 @@ from rest_framework import serializers
 from profiles_app.models import UserProfile
 
 
+NON_NULL_FIELDS = ["first_name", "last_name", "location", "tel", "description", "working_hours"]
+
+
+def ensure_non_null_strings(data):
+    """Ensures defined fields are never null in API responses."""
+    for field in NON_NULL_FIELDS:
+        if data.get(field) is None:
+            data[field] = ""
+    return data
+
+
 class ProfileSerializer(serializers.ModelSerializer):
+    """Profile detail serializer supporting PATCH for the profile owner."""
     user = serializers.IntegerField(source="user.id", read_only=True)
     username = serializers.CharField(source="user.username", read_only=True)
 
@@ -32,34 +44,38 @@ class ProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ["type", "created_at"]
 
     def get_file(self, obj):
+        """Returns only the filename for the uploaded profile file."""
         if not obj.file:
             return None
         return Path(obj.file.name).name
 
     def update(self, instance, validated_data):
+        """Updates User fields and UserProfile fields from a single payload."""
         user_data = validated_data.pop("user", {})
-        user = instance.user
+        self._update_user_fields(instance, user_data)
+        self._update_profile_fields(instance, validated_data)
+        return instance
 
+    def _update_user_fields(self, instance, user_data):
+        user = instance.user
         for attr in ["first_name", "last_name", "email"]:
             if attr in user_data:
                 setattr(user, attr, user_data[attr])
         user.save()
 
-        for attr, value in validated_data.items():
+    def _update_profile_fields(self, instance, profile_data):
+        for attr, value in profile_data.items():
             setattr(instance, attr, value)
         instance.save()
 
-        return instance
-
     def to_representation(self, instance):
+        """Ensures selected text fields are never null in the response."""
         data = super().to_representation(instance)
-        for field in ["first_name", "last_name", "location", "tel", "description", "working_hours"]:
-            if data.get(field) is None:
-                data[field] = ""
-        return data
+        return ensure_non_null_strings(data)
 
 
 class ProfileListSerializer(serializers.ModelSerializer):
+    """Profile list serializer for business/customer profile listings."""
     user = serializers.IntegerField(source="user.id", read_only=True)
     username = serializers.CharField(source="user.username", read_only=True)
 
@@ -84,13 +100,12 @@ class ProfileListSerializer(serializers.ModelSerializer):
         ]
 
     def get_file(self, obj):
+        """Returns only the filename for the uploaded profile file."""
         if not obj.file:
             return None
         return Path(obj.file.name).name
 
     def to_representation(self, instance):
+        """Ensures selected text fields are never null in the response."""
         data = super().to_representation(instance)
-        for field in ["first_name", "last_name", "location", "tel", "description", "working_hours"]:
-            if data.get(field) is None:
-                data[field] = ""
-        return data
+        return ensure_non_null_strings(data)
