@@ -10,3 +10,14 @@ class IsCustomerUser(BasePermission):
             and hasattr(request.user, "profile")
             and request.user.profile.type == "customer"
         )
+
+
+class IsBusinessUser(BasePermission):
+    """Allows access only to authenticated users with a business profile."""
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and hasattr(request.user, "profile")
+            and request.user.profile.type == "business"
+        )
