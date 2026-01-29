@@ -27,3 +27,9 @@ class IsStaffUser(BasePermission):
     """Allows access only to staff users."""
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated and request.user.is_staff)
+
+
+class IsOrderBusinessOwner(BasePermission):
+    """Allows access only if the order belongs to the business user."""
+    def has_object_permission(self, request, view, obj):
+        return obj.business_user == request.user
