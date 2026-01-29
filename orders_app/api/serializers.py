@@ -22,3 +22,7 @@ class OrderSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+
+class OrderCreateSerializer(serializers.Serializer):
+    """Creates an order based on an OfferDetail id."""
+    offer_detail_id = serializers.IntegerField()
