@@ -1,8 +1,8 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from reviews_app.models import Review
-from .permissions import IsCustomerUser
-from .serializers import ReviewSerializer, ReviewCreateSerializer
+from .permissions import IsCustomerUser, IsReviewOwner
+from .serializers import ReviewSerializer, ReviewCreateSerializer, ReviewUpdateSerializer
 
 
 class ReviewListCreateView(generics.ListCreateAPIView):
@@ -43,3 +43,13 @@ class ReviewListCreateView(generics.ListCreateAPIView):
             return ReviewCreateSerializer
         return ReviewSerializer
 
+
+class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update or delete a review. Only the owner may modify."""
+    queryset = Review.objects.all()
+    permission_classes = [IsAuthenticated, IsReviewOwner]
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return ReviewUpdateSerializer
+        return ReviewSerializer
