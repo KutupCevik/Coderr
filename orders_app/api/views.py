@@ -17,6 +17,10 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+
+        if user.is_staff:
+            return Order.objects.all()
+
         return Order.objects.filter(Q(customer_user=user) | Q(business_user=user))
 
     def get_serializer_class(self):
