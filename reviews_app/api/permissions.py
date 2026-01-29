@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
 class IsCustomerUser(BasePermission):
@@ -10,3 +10,11 @@ class IsCustomerUser(BasePermission):
             and hasattr(request.user, "profile")
             and request.user.profile.type == "customer"
         )
+
+
+class IsReviewOwner(BasePermission):
+    """Allows write access only for the creator of the review."""
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+        return obj.reviewer == request.user
