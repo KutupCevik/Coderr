@@ -21,3 +21,9 @@ class IsBusinessUser(BasePermission):
             and hasattr(request.user, "profile")
             and request.user.profile.type == "business"
         )
+
+
+class IsStaffUser(BasePermission):
+    """Allows access only to staff users."""
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.is_staff)
