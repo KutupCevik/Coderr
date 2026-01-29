@@ -4,6 +4,7 @@ from offers_app.models import Offer, OfferDetail
 
 
 class OfferDetailWriteSerializer(serializers.ModelSerializer):
+    """Serializer for creating/updating OfferDetail objects."""
     class Meta:
         model = OfferDetail
         fields = ["id", "title", "revisions", "delivery_time_in_days", "price", "features", "offer_type"]
@@ -11,6 +12,7 @@ class OfferDetailWriteSerializer(serializers.ModelSerializer):
 
 
 class OfferDetailLinkSerializer(serializers.ModelSerializer):
+    """Serializer returning id and detail URL for OfferDetail."""
     url = serializers.SerializerMethodField()
 
     class Meta:
@@ -21,58 +23,8 @@ class OfferDetailLinkSerializer(serializers.ModelSerializer):
         return reverse("offerdetail-detail", kwargs={"pk": obj.id})
 
 
-class OfferListSerializer(serializers.ModelSerializer):
-    min_price = serializers.FloatField(read_only=True)
-    min_delivery_time = serializers.IntegerField(read_only=True)
-    details = OfferDetailLinkSerializer(many=True, read_only=True)
-    user_details = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Offer
-        fields = [
-            "id",
-            "user",
-            "title",
-            "image",
-            "description",
-            "created_at",
-            "updated_at",
-            "details",
-            "min_price",
-            "min_delivery_time",
-            "user_details",
-        ]
-
-    def get_user_details(self, obj):
-        return {
-            "first_name": obj.user.first_name or "",
-            "last_name": obj.user.last_name or "",
-            "username": obj.user.username,
-        }
-
-
-class OfferRetrieveSerializer(serializers.ModelSerializer):
-    min_price = serializers.FloatField(read_only=True)
-    min_delivery_time = serializers.IntegerField(read_only=True)
-    details = OfferDetailLinkSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Offer
-        fields = [
-            "id",
-            "user",
-            "title",
-            "image",
-            "description",
-            "created_at",
-            "updated_at",
-            "details",
-            "min_price",
-            "min_delivery_time",
-        ]
-
-
 class OfferWriteSerializer(serializers.ModelSerializer):
+    """Serializer for creating and updating offers with nested details."""
     details = OfferDetailWriteSerializer(many=True)
 
     class Meta:
@@ -90,34 +42,47 @@ class OfferWriteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         details_data = validated_data.pop("details")
-        request = self.context["request"]
+        offer = self._create_offer(validated_data)
+        self._create_details(offer, details_data)
+        return offer
 
-        offer = Offer.objects.create(user=request.user, **validated_data)
+    def _create_offer(self, validated_data):
+        request = self.context["request"]
+        return Offer.objects.create(user=request.user, **validated_data)
+
+    def _create_details(self, offer, details_data):
         for detail_data in details_data:
             OfferDetail.objects.create(offer=offer, **detail_data)
-        return offer
 
     def update(self, instance, validated_data):
         details_data = validated_data.pop("details", None)
+        self._update_offer_fields(instance, validated_data)
+        if details_data is not None:
+            self._update_offer_details(instance, details_data)
+        return instance
 
-        for attr, value in validated_data.items():
+    def _update_offer_fields(self, instance, data):
+        for attr, value in data.items():
             setattr(instance, attr, value)
         instance.save()
 
-        if details_data is not None:
-            for detail in details_data:
-                offer_type = detail.get("offer_type")
-                if not offer_type:
-                    raise serializers.ValidationError({"offer_type": "offer_type is required."})
+    def _update_offer_details(self, offer, details_data):
+        for detail in details_data:
+            offer_type = detail.get("offer_type")
+            if not offer_type:
+                raise serializers.ValidationError({"offer_type": "offer_type is required."})
 
-                try:
-                    offer_detail = OfferDetail.objects.get(offer=instance, offer_type=offer_type)
-                except OfferDetail.DoesNotExist:
-                    raise serializers.ValidationError({"details": f"Detail with offer_type '{offer_type}' not found."})
+            offer_detail = self._get_offer_detail(offer, offer_type)
+            self._apply_detail_fields(offer_detail, detail)
+            offer_detail.save()
 
-                for field in ["title", "revisions", "delivery_time_in_days", "price", "features"]:
-                    if field in detail:
-                        setattr(offer_detail, field, detail[field])
-                offer_detail.save()
+    def _get_offer_detail(self, offer, offer_type):
+        try:
+            return OfferDetail.objects.get(offer=offer, offer_type=offer_type)
+        except OfferDetail.DoesNotExist:
+            raise serializers.ValidationError({"details": f"Detail with offer_type '{offer_type}' not found."})
 
-        return instance
+    def _apply_detail_fields(self, offer_detail, detail):
+        for field in ["title", "revisions", "delivery_time_in_days", "price", "features"]:
+            if field in detail:
+                setattr(offer_detail, field, detail[field])
