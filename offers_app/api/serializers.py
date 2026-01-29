@@ -70,3 +70,54 @@ class OfferRetrieveSerializer(serializers.ModelSerializer):
             "min_price",
             "min_delivery_time",
         ]
+
+
+class OfferWriteSerializer(serializers.ModelSerializer):
+    details = OfferDetailWriteSerializer(many=True)
+
+    class Meta:
+        model = Offer
+        fields = ["id", "title", "image", "description", "details"]
+        read_only_fields = ["id"]
+
+    def validate_details(self, value):
+        if len(value) != 3:
+            raise serializers.ValidationError("An offer must contain exactly 3 details.")
+        types = [d.get("offer_type") for d in value]
+        if len(set(types)) != 3:
+            raise serializers.ValidationError("Each detail must have a unique offer_type.")
+        return value
+
+    def create(self, validated_data):
+        details_data = validated_data.pop("details")
+        request = self.context["request"]
+
+        offer = Offer.objects.create(user=request.user, **validated_data)
+        for detail_data in details_data:
+            OfferDetail.objects.create(offer=offer, **detail_data)
+        return offer
+
+    def update(self, instance, validated_data):
+        details_data = validated_data.pop("details", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if details_data is not None:
+            for detail in details_data:
+                offer_type = detail.get("offer_type")
+                if not offer_type:
+                    raise serializers.ValidationError({"offer_type": "offer_type is required."})
+
+                try:
+                    offer_detail = OfferDetail.objects.get(offer=instance, offer_type=offer_type)
+                except OfferDetail.DoesNotExist:
+                    raise serializers.ValidationError({"details": f"Detail with offer_type '{offer_type}' not found."})
+
+                for field in ["title", "revisions", "delivery_time_in_days", "price", "features"]:
+                    if field in detail:
+                        setattr(offer_detail, field, detail[field])
+                offer_detail.save()
+
+        return instance
