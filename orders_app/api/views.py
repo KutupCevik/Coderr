@@ -99,3 +99,25 @@ class OrderCountView(APIView):
         if not hasattr(user, "profile") or user.profile.type != "business":
             return None
         return user
+
+
+class CompletedOrderCountView(APIView):
+    """Returns count of completed orders for a business user."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, business_user_id):
+        business_user = self._get_business_user(business_user_id)
+        if business_user is None:
+            return Response({"detail": "Business user not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        count = Order.objects.filter(business_user=business_user, status="completed").count()
+        return Response({"completed_order_count": count}, status=status.HTTP_200_OK)
+
+    def _get_business_user(self, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return None
+        if not hasattr(user, "profile") or user.profile.type != "business":
+            return None
+        return user
